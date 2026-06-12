@@ -17,6 +17,7 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "next": "^16.2.9",
     "next-auth": "^4.24.14",
     "nodemailer": "^7.0.13",

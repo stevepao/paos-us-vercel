@@ -66,7 +66,14 @@ export function SiteShell({ settings, children }: SiteShellProps) {
           </div>
           <div className="text-left">
             Copyright © {new Date().getFullYear()} · Stephen Pao ·{" "}
-            <FooterAuthButton isAuthConfigured={isGoogleAuthConfigured()} />
+            <Link className="text-inherit" href="/privacy/">
+              Privacy
+            </Link>{" "}
+            ·{" "}
+            <Link className="text-inherit" href="/terms/">
+              Terms
+            </Link>{" "}
+            · <FooterAuthButton isAuthConfigured={isGoogleAuthConfigured()} />
           </div>
         </div>
       </footer>
