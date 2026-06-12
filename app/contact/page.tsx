@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Script from "next/script";
+import { ContactTurnstile } from "@/components/ContactTurnstile";
 
 export const metadata: Metadata = {
   title: "Contact Us",
@@ -48,12 +48,6 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
       {status === "turnstile-failed" ? (
         <p className={noticeClass}>Please complete the verification and try again.</p>
       ) : null}
-      {turnstileSiteKey ? (
-        <Script
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-          strategy="afterInteractive"
-        />
-      ) : null}
       <form action="/api/contact" className="grid max-w-2xl gap-5" method="post">
         <label className={labelClass}>
           Name
@@ -77,12 +71,7 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
           Website
           <input autoComplete="off" name="website" tabIndex={-1} />
         </label>
-        {turnstileSiteKey ? (
-          <div
-            className="cf-turnstile"
-            data-sitekey={turnstileSiteKey}
-          />
-        ) : null}
+        {turnstileSiteKey ? <ContactTurnstile siteKey={turnstileSiteKey} /> : null}
         <button
           className="inline-flex w-fit items-center justify-center rounded-full bg-paos-orange px-7 py-3 font-condensed text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-paos-ink"
           type="submit"
