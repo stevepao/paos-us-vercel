@@ -1,4 +1,11 @@
-import { siBluesky, siFacebook, siInstagram, siSubstack, siX } from "simple-icons";
+import {
+  siBluesky,
+  siFacebook,
+  siInstagram,
+  siSubstack,
+  siX,
+  siYoutube,
+} from "simple-icons";
 
 type BrandIcon = {
   path: string;
@@ -44,6 +51,11 @@ export function SocialLinks() {
       href: process.env.SOCIAL_SUBSTACK_URL,
       label: "Substack",
       icon: siSubstack,
+    },
+    {
+      href: process.env.SOCIAL_YOUTUBE_URL,
+      label: "YouTube",
+      icon: siYoutube,
     },
     {
       href: process.env.SOCIAL_LINK_IN_BIO_URL,
