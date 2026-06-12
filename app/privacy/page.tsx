@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -63,8 +64,7 @@ export default function PrivacyPage() {
       <h2>Data Requests</h2>
       <p>
         To request deletion of a comment or account-related data associated with
-        this site, email{" "}
-        <a href="mailto:webmaster@hillwork.com">webmaster@hillwork.com</a>.
+        this site, use the <Link href="/contact/">contact form</Link>.
       </p>
 
       <h2>Changes</h2>

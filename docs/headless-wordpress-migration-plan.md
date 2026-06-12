@@ -17,45 +17,38 @@ behavior explicit.
 
 ## Pao Family Site Assumptions
 
-These assumptions are specific to migrating `https://paos.us` from WordPress to
-a Next.js App Router frontend. The current repository is a planning workspace;
-local development should not change the production WordPress site.
+These assumptions are specific to the `https://paos.us` migration from a
+WordPress-rendered frontend to a Next.js App Router frontend. The current
+repository contains the implemented frontend and supporting WordPress mu-plugins.
 
 Current WordPress shape:
 
 - The public site is `Pao Family`, with description `Stephen, Marsha, Christina,
   Annalisa`.
-- WordPress currently lives at `https://paos.us`; after frontend development,
-  the backend is expected to move to `https://api.paos.us`.
-- During local development, the frontend may read production WordPress APIs, but
-  should not expose post editing, page editing, or other site-management
-  operations.
+- WordPress now acts as the backend at `https://api.paos.us`. During local
+  development, the frontend may read that backend, but should not expose post
+  editing, page editing, or other site-management operations.
 - WPGraphQL is available at `/graphql`, and WordPress REST is available at
   `/wp-json`.
-- The old frontend is Genesis with the `workstation-pro` child theme and AMP
-  standard mode.
+- The old frontend was Genesis with the `workstation-pro` child theme and AMP
+  standard mode. The Next.js frontend now owns public rendering.
 - There are about 71 posts, 13 pages, 6 categories, and no tags observed.
-- The current WordPress sitemap endpoints return errors, so sitemap generation
-  should be owned by Next.js after migration.
+- Sitemap generation is owned by Next.js.
 
 Public content and auth:
 
-- Generally, only posts in the `featured-photo` category should be publicly
-  readable.
-- Existing private content is currently gated by a WordPress plugin, but the
-  authentication scheme should change during the migration.
-- WPGraphQL currently exposes at least some gated post body content to anonymous
-  requests. Fix this on the WordPress side, likely with a small custom plugin or
-  mu-plugin that redacts or blocks non-public post content for unauthenticated
-  GraphQL requests. Do not rely only on the React app for this. This repository
-  includes a draft mu-plugin at
-  `wordpress/mu-plugins/paos-wpgraphql-private-content.php` to test on staging
-  before installing on the production backend.
+- Posts in the `featured-photo` and `yhpao` categories are public.
+- Private posts are visible in the Next.js frontend only to signed-in Google
+  accounts listed in `AUTHORIZED_GOOGLE_EMAILS`.
+- WPGraphQL privacy is enforced WordPress-side with the mu-plugin at
+  `wordpress/mu-plugins/paos-wpgraphql-private-content.php`. Anonymous
+  WPGraphQL requests can read public categories only. Trusted server-to-server
+  requests from Next.js include `WORDPRESS_GRAPHQL_AUTH_TOKEN`, matching
+  `PAOS_GRAPHQL_SERVER_TOKEN` in WordPress.
 - The Next.js frontend should still enforce the same public-content rule as a
   defense-in-depth measure.
-- WordPress login, register, lost-password, and reset-password flows do not need
-  React implementations. If needed, link those flows back to the WordPress
-  backend.
+- WordPress admin/login flows use backend/core WordPress paths. Frontend user
+  auth for comments and private views uses Google Sign-In through Auth.js.
 
 Routes and URLs:
 
@@ -68,8 +61,8 @@ Routes and URLs:
 - Keep public page URLs at their current root paths where applicable, including
   `/`, `/posts/`, `/contact/`, `/directions/`, `/yhpao/`, `/welcome/`,
   `/holiday201/`, and `/pokemon-go-the-grind-begins/`.
-- Preserve category archive URLs such as `/category/featured-photo/` when they
-  are useful for discovery or redirects.
+- Preserve public category archive URLs such as `/category/featured-photo/` and
+  `/category/yhpao/` when they are useful for discovery or redirects.
 - Because dated post URLs are retained, a `/blog/[slug]` route is not needed for
   this site unless the URL strategy changes later.
 
@@ -94,13 +87,13 @@ Contact form:
 - Use SMTP through Purelymail.
 - Use `webmaster@hillwork.com` as the sender.
 - Send contact messages to `us@spao.net`.
-- Cloudflare Turnstile protection is a nice-to-have and may wait until the final
-  domain setup is available.
+- Cloudflare Turnstile protects the contact form. Comments rely on Google
+  Sign-In rather than a separate Turnstile challenge.
 
 Backend lockdown:
 
-- After launch, `api.paos.us` should be locked down for normal end-user browser
-  access.
+- `api.paos.us` is locked down for normal end-user browser access with
+  `wordpress/mu-plugins/paos-backend-only.php`.
 - Keep the WordPress content APIs, comment submission endpoint, GraphQL endpoint
   as appropriate, and media uploads publicly reachable enough for the frontend.
 - Keep WordPress admin/editor access protected.
@@ -121,17 +114,18 @@ Pao-specific environment variables:
 SITE_URL=http://localhost:3000
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
-WORDPRESS_API_URL=https://paos.us/graphql
-WORDPRESS_REST_URL=https://paos.us/wp-json
-WORDPRESS_SITE_URL=https://paos.us
-WORDPRESS_MEDIA_BASE_URL=https://paos.us/wp-content/uploads
-WORDPRESS_PUBLIC_CATEGORY_SLUG=featured-photo
+WORDPRESS_SITE_URL=https://api.paos.us
+WORDPRESS_API_URL=https://api.paos.us/graphql
+WORDPRESS_REST_URL=https://api.paos.us/wp-json
+WORDPRESS_MEDIA_BASE_URL=https://api.paos.us/wp-content/uploads
+WORDPRESS_GRAPHQL_AUTH_TOKEN=
+WORDPRESS_PUBLIC_CATEGORY_SLUGS=featured-photo,yhpao
 WORDPRESS_PUBLIC_PAGE_SLUGS=home,posts,contact,directions,yhpao
 WORDPRESS_PREBUILD_POST_LIMIT=8
 
 REVALIDATE_SECRET=
 
-WORDPRESS_REDIRECTION_API_URL=https://paos.us/wp-json/redirection/v1/redirect
+WORDPRESS_REDIRECTION_API_URL=https://api.paos.us/wp-json/redirection/v1/redirect
 WORDPRESS_REDIRECTION_USERNAME=
 WORDPRESS_REDIRECTION_APPLICATION_PASSWORD=
 WORDPRESS_REDIRECTION_CACHE_TTL_SECONDS=300
@@ -148,18 +142,26 @@ CONTACT_TO=us@spao.net
 SMTP_SECURE=false
 
 AUTH_SECRET=
+NEXTAUTH_SECRET=
 AUTH_GOOGLE_ID=
 AUTH_GOOGLE_SECRET=
+AUTHORIZED_GOOGLE_EMAILS=
 NEXTAUTH_URL=http://localhost:3000
 
 NEXT_PUBLIC_CONTACT_TURNSTILE_SITE_KEY=
 CONTACT_TURNSTILE_SECRET_KEY=
-NEXT_PUBLIC_COMMENT_TURNSTILE_SITE_KEY=
-COMMENT_TURNSTILE_SECRET_KEY=
+
+SOCIAL_LINKEDIN_URL=
+SOCIAL_X_URL=
+SOCIAL_BLUESKY_URL=
+SOCIAL_FACEBOOK_URL=
+SOCIAL_INSTAGRAM_URL=
+SOCIAL_SUBSTACK_URL=
+SOCIAL_YOUTUBE_URL=
+SOCIAL_LINK_IN_BIO_URL=
 ```
 
-For production after the backend move, switch the WordPress URLs to
-`https://api.paos.us` and set `SITE_URL` / `NEXT_PUBLIC_SITE_URL` to
+For production, set `SITE_URL`, `NEXT_PUBLIC_SITE_URL`, and `NEXTAUTH_URL` to
 `https://paos.us`.
 
 ## Recommended Build Order
@@ -234,10 +236,14 @@ Build the frontend routes around the new public URL structure.
 For this project:
 
 - `/`
-- `/all-posts`
-- `/blog/[slug]`
-- `/contact`
-- `/privacy-policy`
+- `/posts/`
+- `/all-posts/`
+- `/YYYY/MM/post-slug/`
+- `/contact/`
+- `/directions/`
+- `/yhpao/`
+- `/privacy/`
+- `/terms/`
 - `/feed.xml`
 - `/sitemap.xml`
 - `/robots.txt`
@@ -249,8 +255,8 @@ Important route behavior:
   a full redeploy.
 - Use `notFound()` when WordPress returns no post/page.
 - Sanitize WordPress HTML before rendering with `dangerouslySetInnerHTML`.
-- Preserve basic WordPress formatting: headings, lists, blockquotes, figures,
-  images, and links.
+- Preserve basic WordPress formatting: headings, lists, blockquotes, tables,
+  figures, image alignment, iframes, self-hosted videos, and links.
 
 ## 4. SEO And Social Previews
 
@@ -322,31 +328,24 @@ alternates: {
 
 Plan for both old external URLs and links embedded inside article content.
 
-For this project, the new URL format is:
+For this project, dated WordPress article permalinks are preserved:
 
 ```text
-https://time-restricted.com/blog/post-slug
+https://paos.us/2018/11/post-slug/
 ```
 
-Old WordPress article links used dated permalinks:
-
-```text
-https://time-restricted.com/2018/11/02/post-slug/
-```
-
-Create a utility like `lib/wordpress-links.ts` to rewrite links in sanitized
-HTML:
+Rewrite links in sanitized HTML:
 
 - Backend WordPress origin to frontend origin.
-- Dated WordPress post permalinks to `/blog/[slug]`.
+- Same-domain dated WordPress post permalinks to dated frontend paths.
 - Same-domain legacy links, not only backend API-domain links.
 - Preserve query strings and hash fragments.
 
 Apply that transform wherever WordPress HTML is rendered:
 
-- Blog post content.
+- Post content.
 - Comment content.
-- WordPress-backed pages such as privacy policy.
+- WordPress-backed pages such as `/yhpao/`.
 
 Also rewrite embedded WordPress media URLs in raw post HTML. These are separate
 from anchor links and usually appear in `img` attributes:
@@ -370,6 +369,17 @@ Handle both:
 This matters because raw WordPress HTML is rendered directly by the browser.
 Next.js image configuration does not rewrite image URLs inside
 `dangerouslySetInnerHTML`.
+
+Known media limitation for this site:
+
+- Legacy YouTube embeds are third-party iframes. They work in Chrome on macOS,
+  but may not work by default in Safari or on iPhone, including Chrome on iPhone,
+  because iOS browsers use WebKit and Safari/WebKit applies stricter
+  cross-site-tracking, cookie, and third-party iframe restrictions. Content
+  blockers and private browsing can also prevent YouTube's embedded player from
+  loading or playing.
+- Self-hosted WordPress MP4 video blocks are rendered as `<video>` elements and
+  are separate from this YouTube iframe limitation.
 
 ## 7. Redirects
 
@@ -413,23 +423,9 @@ Add built-in SEO-preserving redirects for URL patterns that are part of the
 WordPress migration, even if they are not explicitly listed in the Redirection
 plugin.
 
-Legacy dated article URLs should permanently redirect to the new frontend post
-route:
-
-```text
-/YYYY/MM/DD/post-slug/ -> /blog/post-slug
-```
-
-For example:
-
-```text
-https://www.example.com/2018/11/02/post-slug/
-https://www.example.com/blog/post-slug
-```
-
-This should be a `301`, preserve query strings, and avoid redirect chains. These
-redirects are important because search engines use them to transfer ranking
-signals from old indexed article URLs to the new canonical article URLs.
+Legacy dated article URLs are preserved where possible. Redirect rules are still
+useful for older plugin/page URLs, old media URLs, and any legacy aliases found
+in production logs.
 
 Legacy media URLs should also permanently redirect so Google Image Search and
 other image indexes do not hit 404s:
@@ -481,9 +477,10 @@ https://www.example.com/api/revalidate?token=REVALIDATE_SECRET
 
 Revalidate:
 
-- `/blog/[slug]` or `/blog/example-post`.
+- The affected dated post URL.
 - `/`
-- `/all-posts`
+- `/posts/`
+- `/all-posts/`
 - `/sitemap.xml`
 - WordPress fetch tags.
 
@@ -492,60 +489,44 @@ data on the next request.
 
 ## 9. Forms, Comments, And Spam Protection
 
-For a site with signup, contact, and comment login forms, protect each workflow
-with its own Cloudflare Turnstile configuration.
-
-Use separate keys for separate actions:
+For this site, Cloudflare Turnstile protects the contact form only. Comments are
+already gated by Google Sign-In.
 
 ```env
-NEXT_PUBLIC_MAILCHIMP_TURNSTILE_SITE_KEY=
-MAILCHIMP_TURNSTILE_SECRET_KEY=
-
 NEXT_PUBLIC_CONTACT_TURNSTILE_SITE_KEY=
 CONTACT_TURNSTILE_SECRET_KEY=
-
-NEXT_PUBLIC_COMMENT_LOGIN_TURNSTILE_SITE_KEY=
-COMMENT_LOGIN_TURNSTILE_SECRET_KEY=
 ```
 
 Client-side behavior:
 
-- Load Turnstile once globally.
-- Use explicit rendering:
+- Use explicit rendering so the widget remounts correctly during Next.js
+  client-side navigation:
 
 ```text
-https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback&render=explicit
+https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit
 ```
 
-- Do not use generic `cf-turnstile` auto-render classes when multiple widgets
-  can appear together.
-- Assign unique container IDs.
-- Reset widgets after submissions.
+- Do not rely on generic `cf-turnstile` auto-render classes in App Router pages.
 
 Server-side behavior:
 
-- Verify each Turnstile token in the specific API route.
-- Keep verifier logic scoped to the form/action if using separate Cloudflare
-  widgets.
+- Verify the contact Turnstile token in `app/api/contact/route.ts`.
 - Return helpful errors for missing configuration, invalid tokens, and backend
   failures.
 
-## 10. Comments And WordPress Auth
+## 10. Comments And Auth.js
 
-If preserving WordPress comments:
+For this site:
 
-- Use WordPress JWT auth for login.
-- Store the JWT in an HTTP-only cookie.
-- Validate the token with WordPress before showing logged-in state.
-- Post comments through the WordPress REST API.
-- Add Turnstile to the login step if the comment form requires login.
+- Use Auth.js with Google Sign-In.
+- Store the session through Auth.js.
+- Post comments through the WordPress REST API from a Next.js route.
+- Store the Google profile name/email as WordPress comment author fields.
+- Do not require a WordPress account for commenters.
 
-Expected WordPress endpoints:
+Expected WordPress endpoint:
 
 ```text
-POST /wp-json/jwt-auth/v1/token
-POST /wp-json/jwt-auth/v1/token/validate
-GET  /wp-json/wp/v2/users/me
 POST /wp-json/wp/v2/comments
 ```
 
@@ -556,23 +537,32 @@ Add a custom `app/not-found.tsx` page.
 Include:
 
 - A clear 404 message.
-- Migration context: the page may have moved.
 - Link to home.
-- Link to all posts.
-- Search form.
-- Contact link for reporting broken links.
-- Recent posts from WordPress.
+- Link to public posts, or all posts for authorized users.
+- Search form for public posts.
+- Contact link.
+- Recent public posts from WordPress.
 
 This is especially useful during a URL migration because some old links will be
 missed initially.
 
 ## 12. Environment Checklist
 
-Common Vercel variables:
+Current Vercel variables for this project:
 
 ```env
-WORDPRESS_API_URL=
 SITE_URL=
+NEXT_PUBLIC_SITE_URL=
+
+WORDPRESS_SITE_URL=
+WORDPRESS_API_URL=
+WORDPRESS_REST_URL=
+WORDPRESS_MEDIA_BASE_URL=
+WORDPRESS_GRAPHQL_AUTH_TOKEN=
+WORDPRESS_PUBLIC_CATEGORY_SLUGS=featured-photo,yhpao
+WORDPRESS_PUBLIC_PAGE_SLUGS=home,posts,contact,directions,yhpao
+WORDPRESS_PREBUILD_POST_LIMIT=8
+
 REVALIDATE_SECRET=
 
 WORDPRESS_REDIRECTION_API_URL=
@@ -580,8 +570,8 @@ WORDPRESS_REDIRECTION_USERNAME=
 WORDPRESS_REDIRECTION_APPLICATION_PASSWORD=
 WORDPRESS_REDIRECTION_CACHE_TTL_SECONDS=300
 
-MAILCHIMP_API_KEY=
-MAILCHIMP_LIST_ID=
+WORDPRESS_COMMENTS_USERNAME=
+WORDPRESS_COMMENTS_APPLICATION_PASSWORD=
 
 SMTP_HOST=
 SMTP_PORT=587
@@ -591,16 +581,28 @@ SMTP_FROM=
 CONTACT_TO=
 SMTP_SECURE=false
 
-NEXT_PUBLIC_MAILCHIMP_TURNSTILE_SITE_KEY=
-MAILCHIMP_TURNSTILE_SECRET_KEY=
+AUTH_SECRET=
+NEXTAUTH_SECRET=
+AUTH_GOOGLE_ID=
+AUTH_GOOGLE_SECRET=
+AUTHORIZED_GOOGLE_EMAILS=
+NEXTAUTH_URL=
+
+SOCIAL_LINKEDIN_URL=
+SOCIAL_X_URL=
+SOCIAL_BLUESKY_URL=
+SOCIAL_FACEBOOK_URL=
+SOCIAL_INSTAGRAM_URL=
+SOCIAL_SUBSTACK_URL=
+SOCIAL_YOUTUBE_URL=
+SOCIAL_LINK_IN_BIO_URL=
+
 NEXT_PUBLIC_CONTACT_TURNSTILE_SITE_KEY=
 CONTACT_TURNSTILE_SECRET_KEY=
-NEXT_PUBLIC_COMMENT_LOGIN_TURNSTILE_SITE_KEY=
-COMMENT_LOGIN_TURNSTILE_SECRET_KEY=
 ```
 
-Only include variables needed by the next site. A simpler site may not need
-Mailchimp, SMTP, comments, JWT auth, or all Turnstile keys.
+Only include variables needed by the site. For this project, comments use Google
+Sign-In and do not use a separate Turnstile widget.
 
 ## 13. WordPress-Side Checklist
 
@@ -608,9 +610,16 @@ Before launch:
 
 - Confirm WPGraphQL works.
 - Confirm REST API works.
-- Confirm SEO plugin data is exposed if using Yoast/RankMath.
 - Configure Redirection plugin rules.
 - Create a WordPress Application Password for redirect-rule reads.
+- Install `paos-wpgraphql-private-content.php` and define
+  `PAOS_GRAPHQL_SERVER_TOKEN` in `wp-config.php`.
+- Install `paos-backend-only.php` to redirect normal `api.paos.us` browsing back
+  to the frontend while leaving APIs, media, and admin/login paths available.
+- Deactivate frontend-only WordPress plugins that the Next.js frontend replaces
+  such as AMP, Theme My Login, WPForms, sitemap plugins, social widgets, and
+  theme-rendering helpers.
+- Configure Cloudflare/rate limits/query-depth limits for `/graphql`.
 - Configure webhook plugin to POST to:
 
 ```text
@@ -634,8 +643,8 @@ Spot-check before launch:
 - Homepage renders posts.
 - Individual post pages render.
 - New/unbuilt post slugs can render.
-- Old dated links inside article content rewrite to `/blog/[slug]`.
-- Old dated article URLs 301 to `/blog/[slug]`.
+- Dated post URLs render at their preserved paths.
+- Internal article links rewrite to frontend/backend-safe URLs.
 - Old `/wp-content/uploads/...` image URLs 301 to the backend media host.
 - Redirection plugin rules redirect correctly.
 - `/sitemap.xml` contains frontend URLs.
@@ -644,7 +653,10 @@ Spot-check before launch:
 - Social preview tags are post-specific.
 - X/Twitter and Facebook validators see absolute image URLs.
 - Revalidation webhook refreshes the expected post.
-- Contact/signup/comment flows work.
+- Contact and comment flows work.
+- Privacy and Terms pages are linked in the footer and included in the sitemap.
+- Contact Turnstile remounts correctly after client-side navigation.
+- Public and authorized-private GraphQL reads work as expected.
 - 404 page helps users recover.
 
 After launch:
