@@ -24,9 +24,40 @@ function paos_graphql_is_trusted_server_request(): bool
         return false;
     }
 
-    $provided_token = $_SERVER['HTTP_X_PAOS_GRAPHQL_AUTH'] ?? '';
+    $provided_token = paos_graphql_get_request_auth_token();
 
     return is_string($provided_token) && hash_equals(PAOS_GRAPHQL_SERVER_TOKEN, $provided_token);
+}
+
+/**
+ * Reads the shared token from common PHP server-header locations.
+ */
+function paos_graphql_get_request_auth_token(): string
+{
+    $server_header_names = [
+        'HTTP_X_PAOS_GRAPHQL_AUTH',
+        'REDIRECT_HTTP_X_PAOS_GRAPHQL_AUTH',
+    ];
+
+    foreach ($server_header_names as $header_name) {
+        if (isset($_SERVER[$header_name]) && is_string($_SERVER[$header_name])) {
+            return trim($_SERVER[$header_name]);
+        }
+    }
+
+    if (function_exists('getallheaders')) {
+        $headers = getallheaders();
+
+        if (is_array($headers)) {
+            foreach ($headers as $header_name => $header_value) {
+                if (strtolower((string) $header_name) === 'x-paos-graphql-auth' && is_string($header_value)) {
+                    return trim($header_value);
+                }
+            }
+        }
+    }
+
+    return '';
 }
 
 /**
