@@ -185,7 +185,9 @@ img {
 .wp-content h3,
 main > h1,
 main > section > h1,
-article > h1 {
+article > h1,
+article > h2,
+article > h3 {
   font-weight: 300;
   line-height: 1.2;
 }
@@ -203,6 +205,16 @@ article > h1 {
 
 .wp-content h2 {
   font-size: clamp(2rem, 6vw, 3.6rem);
+}
+
+article > h2 {
+  font-size: 32px;
+  margin: 44px 0 18px;
+}
+
+article > h3 {
+  font-size: 24px;
+  margin: 32px 0 14px;
 }
 
 .wp-content p,
