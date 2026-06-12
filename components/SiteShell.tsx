@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AuthorizedNavItems } from "@/components/AuthorizedNavItems";
 import { FooterAuthButton } from "@/components/FooterAuthButton";
+import { SocialLinks } from "@/components/SocialLinks";
 import { isGoogleAuthConfigured } from "@/lib/auth";
 import type { SiteSettings } from "@/lib/wordpress";
 
@@ -48,22 +49,7 @@ export function SiteShell({ settings, children }: SiteShellProps) {
       <main className="mx-auto max-w-[1200px] px-4 py-12 md:py-16">{children}</main>
       <footer className="min-h-64 bg-paos-ink px-4 py-16 font-condensed text-sm uppercase tracking-[0.08em] text-zinc-300">
         <div className="mx-auto max-w-[1200px]">
-          <div className="mb-24 flex justify-center gap-3">
-            <a
-              className="inline-flex h-9 w-9 items-center justify-center bg-black text-base text-white no-underline transition hover:bg-paos-orange hover:text-white"
-              href="https://www.linkedin.com/in/stevep"
-              aria-label="LinkedIn"
-            >
-              in
-            </a>
-            <a
-              className="inline-flex h-9 w-9 items-center justify-center bg-black text-base text-white no-underline transition hover:bg-paos-orange hover:text-white"
-              href="https://www.twitter.com/steve_pao"
-              aria-label="Twitter"
-            >
-              x
-            </a>
-          </div>
+          <SocialLinks />
           <div className="text-left">
             Copyright © {new Date().getFullYear()} · Stephen Pao ·{" "}
             <Link className="text-inherit" href="/privacy/">
