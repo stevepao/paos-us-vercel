@@ -11,6 +11,8 @@ export function PostJsonLd({ post, settings }: PostJsonLdProps) {
   const siteUrl = getSiteUrl();
   const url = `${siteUrl}${post.uri}`;
   const image = post.featuredImage?.node?.sourceUrl;
+  const websiteId = `${siteUrl}/#website`;
+  const authorId = `${siteUrl}/#stephen-pao`;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -20,13 +22,15 @@ export function PostJsonLd({ post, settings }: PostJsonLdProps) {
     dateModified: post.modified,
     mainEntityOfPage: url,
     url,
+    isPartOf: {
+      "@id": websiteId,
+      name: settings.title,
+    },
     author: {
-      "@type": "Person",
-      name: "Stephen Pao",
+      "@id": authorId,
     },
     publisher: {
-      "@type": "Organization",
-      name: settings.title,
+      "@id": authorId,
     },
     image: image ? [image] : undefined,
   };

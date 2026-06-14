@@ -20,6 +20,8 @@ served by Next.js on Vercel.
 - Provides a Next.js SMTP contact form with optional Cloudflare Turnstile.
 - Owns SEO metadata, JSON-LD for public posts, `sitemap.xml`, `robots.txt`, and
   RSS feeds.
+- Emits a site-level schema.org graph for the Pao Family website and family
+  member `Person` nodes.
 - Includes `/privacy/` and `/terms/` pages for Google OAuth review.
 - Uses Vercel Analytics.
 
@@ -53,6 +55,8 @@ current list. In production, the WordPress-related URLs should point at
   enable Cloudflare Turnstile for the contact form.
 - `REVALIDATE_SECRET` protects `/api/revalidate`.
 - `SOCIAL_*_URL` values control footer social links.
+- `SCHEMA_*_SAME_AS` values add optional profile URLs to the site-level
+  schema.org person declarations.
 
 ## WordPress Must-Use Plugins
 

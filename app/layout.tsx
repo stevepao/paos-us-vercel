@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { SiteShell } from "@/components/SiteShell";
+import { SiteJsonLd } from "@/components/SiteJsonLd";
 import { buildDefaultMetadata } from "@/lib/metadata";
 import { getSiteSettings } from "@/lib/wordpress";
 
@@ -20,6 +21,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
+        <SiteJsonLd settings={settings} />
         <SiteShell settings={settings}>{children}</SiteShell>
         <Analytics />
       </body>
