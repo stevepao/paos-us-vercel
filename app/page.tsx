@@ -1,12 +1,25 @@
+import type { Metadata } from "next";
 import { PostList } from "@/components/PostList";
 import { getPublicPosts, getSiteSettings } from "@/lib/wordpress";
+
+export const metadata: Metadata = {
+  title: "Pao Family - Updates, Photos, and Posts",
+  description:
+    "Pao Family is a family website for sharing updates, photos, and related posts from Stephen, Marsha, Christina, and Annalisa Pao.",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default async function HomePage() {
   const [settings, posts] = await Promise.all([getSiteSettings(), getPublicPosts()]);
 
   return (
     <>
-      <p className="mb-16 max-w-md font-serif text-4xl font-light leading-[1.08] text-paos-ink md:mb-20 md:text-5xl">
+      <h1 className="mb-6 max-w-md font-serif text-4xl font-light leading-[1.08] text-paos-ink md:text-5xl">
+        Pao Family
+      </h1>
+      <p className="mb-16 max-w-md font-serif text-3xl font-light leading-[1.12] text-paos-muted md:mb-20 md:text-4xl">
         {settings.description}
       </p>
       <p className="mb-12 max-w-2xl text-xl leading-relaxed text-paos-muted">
