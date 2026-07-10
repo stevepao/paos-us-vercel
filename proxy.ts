@@ -83,6 +83,32 @@ function shouldSkipRedirectLookup(pathname: string): boolean {
     return true;
   }
 
+  const knownAppRoutes = new Set([
+    "/contact/",
+    "/posts/",
+    "/privacy/",
+    "/terms/",
+    "/directions/",
+    "/yhpao/",
+    "/search/",
+    "/all-posts/",
+    "/welcome/",
+    "/holiday201/",
+    "/pokemon-go-the-grind-begins/",
+  ]);
+
+  if (knownAppRoutes.has(pathname)) {
+    return true;
+  }
+
+  if (pathname.startsWith("/category/")) {
+    return true;
+  }
+
+  if (/^\/\d{4}\/\d{1,2}\/[^/]+\/?$/.test(pathname)) {
+    return true;
+  }
+
   return false;
 }
 
@@ -101,7 +127,7 @@ async function getRedirectionRules(): Promise<RedirectionRule[]> {
   const apiUrl = process.env.WORDPRESS_REDIRECTION_API_URL;
   const username = process.env.WORDPRESS_REDIRECTION_USERNAME;
   const password = process.env.WORDPRESS_REDIRECTION_APPLICATION_PASSWORD;
-  const ttlSeconds = Number(process.env.WORDPRESS_REDIRECTION_CACHE_TTL_SECONDS ?? 300);
+  const ttlSeconds = Number(process.env.WORDPRESS_REDIRECTION_CACHE_TTL_SECONDS ?? 86400);
 
   if (!apiUrl || !username || !password) {
     return [];

@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { NotFoundPostsLink } from "@/components/NotFoundPostsLink";
 import { PostList } from "@/components/PostList";
-import { getPublicPosts } from "@/lib/wordpress";
+import { getRecentPublicPosts } from "@/lib/wordpress";
 
 export default async function NotFound() {
-  const posts = await getPublicPosts();
+  const posts = await getRecentPublicPosts(5);
   const fieldClass =
     "w-full rounded-xl border border-paos-line bg-white p-4 font-condensed text-base font-light normal-case tracking-normal outline-none transition focus:border-paos-orange focus:ring-2 focus:ring-paos-orange/20";
 
@@ -35,7 +35,7 @@ export default async function NotFound() {
       </section>
       <section>
         <h2>Recent Updates</h2>
-        <PostList posts={posts.slice(0, 5)} />
+        <PostList posts={posts} />
       </section>
     </>
   );

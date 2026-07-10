@@ -1,47 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useEffect } from "react";
 import { signIn, signOut } from "next-auth/react";
+import { useAuthSummary } from "@/components/AuthSummaryProvider";
 
-type FooterAuthButtonProps = {
-  isAuthConfigured: boolean;
-};
-
-type SessionResponse = {
-  user?: {
-    email?: string | null;
-  };
-};
-
-export function FooterAuthButton({ isAuthConfigured }: FooterAuthButtonProps) {
-  const [isSignedIn, setIsSignedIn] = useState(false);
+export function FooterAuthButton() {
+  const { isAuthConfigured, isSignedIn } = useAuthSummary();
   const [isPending, setIsPending] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthConfigured) {
-      return;
-    }
-
-    let isMounted = true;
-
-    fetch("/api/auth/session")
-      .then((response) => response.json() as Promise<SessionResponse>)
-      .then((session) => {
-        if (isMounted) {
-          setIsSignedIn(Boolean(session.user?.email));
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setIsSignedIn(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isAuthConfigured]);
 
   if (!isAuthConfigured) {
     return <span>Sign in unavailable</span>;

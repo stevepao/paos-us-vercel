@@ -9,6 +9,7 @@ import {
 } from "@/lib/env";
 
 export const WORDPRESS_TAG = "wordpress";
+const PUBLIC_REVALIDATE_SECONDS = 3600;
 
 type GraphqlResponse<T> = {
   data?: T;
@@ -98,7 +99,7 @@ async function wpFetch<T>(
     headers,
     body: JSON.stringify({ query, variables }),
     next: {
-      revalidate: options?.revalidate ?? 300,
+      revalidate: options?.revalidate ?? PUBLIC_REVALIDATE_SECONDS,
       tags: [WORDPRESS_TAG, ...(options?.tags ?? [])],
     },
   });
@@ -128,7 +129,7 @@ export async function wpRestFetch<T>(
   const response = await fetch(`${getWordPressRestUrl()}${pathname}`, {
     ...init,
     next: {
-      revalidate: 300,
+      revalidate: PUBLIC_REVALIDATE_SECONDS,
       tags: [WORDPRESS_TAG],
       ...init?.next,
     },
@@ -151,6 +152,34 @@ const POST_FIELDS = `
   excerpt
   content
   commentStatus
+  categories {
+    nodes {
+      databaseId
+      slug
+      name
+      uri
+    }
+  }
+  featuredImage {
+    node {
+      sourceUrl
+      altText
+      mediaDetails {
+        width
+        height
+      }
+    }
+  }
+`;
+
+const POST_LIST_FIELDS = `
+  databaseId
+  slug
+  uri
+  date
+  modified
+  title
+  excerpt
   categories {
     nodes {
       databaseId
@@ -223,6 +252,39 @@ export const getPublicPosts = cache(async (): Promise<WordPressPost[]> => {
   return [...posts.values()].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   );
+});
+
+export const getRecentPublicPosts = cache(async (limit: number): Promise<WordPressPost[]> => {
+  const postsByCategory = await Promise.all(
+    getPublicCategorySlugs().map(async (categorySlug) => {
+      const data = await wpFetch<{ posts: { nodes: WordPressPost[] } }>(
+        `
+          query RecentPublicPosts($categoryName: String!, $first: Int!) {
+            posts(first: $first, where: { categoryName: $categoryName }) {
+              nodes {
+                ${POST_LIST_FIELDS}
+              }
+            }
+          }
+        `,
+        { categoryName: categorySlug, first: limit },
+        { tags: [`wordpress-recent-${categorySlug}`] },
+      );
+
+      return data.posts.nodes;
+    }),
+  );
+  const posts = new Map<number, WordPressPost>();
+
+  for (const post of postsByCategory.flat()) {
+    if (isPublicPost(post)) {
+      posts.set(post.databaseId, post);
+    }
+  }
+
+  return [...posts.values()]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, limit);
 });
 
 export const getAllPosts = cache(async (): Promise<WordPressPost[]> => {

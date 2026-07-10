@@ -1,12 +1,13 @@
-import { getServerSession } from "next-auth";
+import type { Session } from "next-auth";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
-import { isGoogleAuthConfigured, authOptions } from "@/lib/auth";
+import { isGoogleAuthConfigured } from "@/lib/auth";
 import { renderWordPressHtml, stripHtml } from "@/lib/html";
 import type { WordPressComment, WordPressPost } from "@/lib/wordpress";
 
 type CommentsProps = {
   post: WordPressPost;
   comments: WordPressComment[];
+  session: Session | null;
   status?: string;
 };
 
@@ -18,8 +19,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   minute: "2-digit",
 });
 
-export async function Comments({ post, comments, status }: CommentsProps) {
-  const session = await getServerSession(authOptions);
+export function Comments({ post, comments, session, status }: CommentsProps) {
   const authConfigured = isGoogleAuthConfigured();
 
   return (

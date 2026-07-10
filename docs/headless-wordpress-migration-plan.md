@@ -121,14 +121,14 @@ WORDPRESS_MEDIA_BASE_URL=https://api.paos.us/wp-content/uploads
 WORDPRESS_GRAPHQL_AUTH_TOKEN=
 WORDPRESS_PUBLIC_CATEGORY_SLUGS=featured-photo,yhpao
 WORDPRESS_PUBLIC_PAGE_SLUGS=home,posts,contact,directions,yhpao
-WORDPRESS_PREBUILD_POST_LIMIT=8
+WORDPRESS_PREBUILD_POST_LIMIT=0
 
 REVALIDATE_SECRET=
 
 WORDPRESS_REDIRECTION_API_URL=https://api.paos.us/wp-json/redirection/v1/redirect
 WORDPRESS_REDIRECTION_USERNAME=
 WORDPRESS_REDIRECTION_APPLICATION_PASSWORD=
-WORDPRESS_REDIRECTION_CACHE_TTL_SECONDS=300
+WORDPRESS_REDIRECTION_CACHE_TTL_SECONDS=86400
 
 WORDPRESS_COMMENTS_USERNAME=
 WORDPRESS_COMMENTS_APPLICATION_PASSWORD=
@@ -400,7 +400,7 @@ Environment variables:
 WORDPRESS_REDIRECTION_API_URL=https://api.example.com/wp-json/redirection/v1/redirect
 WORDPRESS_REDIRECTION_USERNAME=
 WORDPRESS_REDIRECTION_APPLICATION_PASSWORD=
-WORDPRESS_REDIRECTION_CACHE_TTL_SECONDS=300
+WORDPRESS_REDIRECTION_CACHE_TTL_SECONDS=86400
 ```
 
 Implementation behavior:
@@ -566,14 +566,14 @@ WORDPRESS_MEDIA_BASE_URL=
 WORDPRESS_GRAPHQL_AUTH_TOKEN=
 WORDPRESS_PUBLIC_CATEGORY_SLUGS=featured-photo,yhpao
 WORDPRESS_PUBLIC_PAGE_SLUGS=home,posts,contact,directions,yhpao
-WORDPRESS_PREBUILD_POST_LIMIT=8
+WORDPRESS_PREBUILD_POST_LIMIT=0
 
 REVALIDATE_SECRET=
 
 WORDPRESS_REDIRECTION_API_URL=
 WORDPRESS_REDIRECTION_USERNAME=
 WORDPRESS_REDIRECTION_APPLICATION_PASSWORD=
-WORDPRESS_REDIRECTION_CACHE_TTL_SECONDS=300
+WORDPRESS_REDIRECTION_CACHE_TTL_SECONDS=86400
 
 WORDPRESS_COMMENTS_USERNAME=
 WORDPRESS_COMMENTS_APPLICATION_PASSWORD=
@@ -677,7 +677,106 @@ After launch:
 - Add missing redirects as they appear.
 - Monitor form/API errors.
 
-## 15. Optional Enhancements
+## 15. Vercel CPU And Runtime Cost Control
+
+Low-traffic headless sites can still show high Vercel fluid active CPU if each page
+view triggers multiple serverless invocations, middleware work, and uncached
+dynamic renders. Treat this as an ongoing optimization pass after launch, not a
+launch blocker.
+
+### Why CPU Can Look High On A Quiet Site
+
+Typical multipliers for this architecture:
+
+- Every page view may trigger more than one serverless function.
+- Client-side auth checks can duplicate work if separate endpoints call
+  `getServerSession()` independently.
+- `proxy.ts` may load WordPress Redirection rules on most non-root routes.
+- Only a small number of post URLs may be prebuilt; older post URLs can remain
+  dynamic and re-render on bot crawls.
+- `not-found.tsx` can fetch more WordPress data than necessary for junk 404s.
+- WordPress webhook revalidation and crawler traffic can exceed human traffic.
+
+### Low-Risk Reduction Plan
+
+Implement in this order:
+
+1. **Combine client auth checks into one endpoint**
+   - Replace separate `/api/auth/session` and `/api/auth/permissions` client calls
+     with one `/api/auth/summary` route.
+   - Return `isAuthConfigured`, `isSignedIn`, and `canViewAllPosts`.
+   - Share the result through one client provider/hook so each page makes one auth
+     request.
+   - Expected impact: roughly one-third fewer function invocations per page view.
+   - Risk: very low.
+
+2. **Prebuild all public posts**
+   - Set `WORDPRESS_PREBUILD_POST_LIMIT=0` to prebuild every public post at build
+     time. Use a positive number only if you need to cap build-time prerendering on
+     a much larger site.
+   - Expected impact: fewer dynamic SSR renders for dated post URLs.
+   - Risk: low; slightly longer builds, with webhook revalidation still available.
+
+3. **Increase Redirection cache TTL**
+   - Raise `WORDPRESS_REDIRECTION_CACHE_TTL_SECONDS` to `86400` if redirect rules
+     rarely change.
+   - Expected impact: fewer WordPress Redirection API fetches from `proxy.ts`.
+   - Risk: very low.
+
+4. **Skip redirect lookup on known App Router paths**
+   - Extend `proxy.ts` to skip Redirection scans for first-party routes such as
+     `/contact/`, `/posts/`, `/privacy/`, `/terms/`, `/directions/`, `/yhpao/`,
+     `/search/`, `/category/*`, and dated post URLs.
+   - Keep redirect lookup for legacy/unknown paths.
+   - Expected impact: less middleware CPU on normal browsing.
+   - Risk: low if Redirection rules are mostly legacy URLs rather than overrides
+     of current Next.js routes.
+
+5. **Lighten the 404 page**
+   - Replace full `getPublicPosts()` usage in `app/not-found.tsx` with a smaller
+     recent-posts query for the recovery list.
+   - Expected impact: lower cost for bot-generated 404 traffic.
+   - Risk: low.
+
+6. **Lengthen public content cache TTL**
+   - Increase default WordPress fetch `revalidate` for public reads from `300` to
+     `3600` when webhook revalidation is already configured.
+   - Expected impact: fewer WordPress round-trips after cache expiry.
+   - Risk: low; content may remain stale for up to an hour without a webhook.
+
+7. **Avoid duplicate server-side session lookups on post pages**
+   - Pass session data from the post page into `Comments` instead of calling
+     `getServerSession()` again in the component.
+   - Expected impact: small per-post savings.
+   - Risk: very low.
+
+### What To Avoid Early
+
+- Removing `proxy.ts` entirely.
+- CDN-caching authenticated auth responses.
+- Disabling webhook revalidation to save CPU.
+- Making protected routes like `/all-posts/` static.
+
+### How To Validate Improvements
+
+In Vercel Observability, compare before and after:
+
+- Invocations of auth routes.
+- Invocations of dynamic dated post routes.
+- 404 route cost.
+- Overall fluid active CPU percentage over 24-48 hours.
+
+### Pao Family Implementation Status
+
+- [x] Step 1: combined `/api/auth/summary` client auth flow
+- [x] Step 2: prebuild all public posts (`WORDPRESS_PREBUILD_POST_LIMIT=0`)
+- [x] Step 3: increase `WORDPRESS_REDIRECTION_CACHE_TTL_SECONDS` to `86400`
+- [x] Step 4: skip redirect lookup on known App Router paths
+- [x] Step 5: lighter 404 recent-posts query
+- [x] Step 6: longer public WordPress cache TTL (`3600` seconds)
+- [x] Step 7: pass session into `Comments`
+
+## 16. Optional Enhancements
 
 These are useful but not required for a small migrated blog:
 

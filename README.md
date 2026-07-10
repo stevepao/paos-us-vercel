@@ -137,6 +137,14 @@ Recommended GraphQL hardening:
 - Consider a WPGraphQL max query depth around `7`.
 - Keep private GraphQL access behind `WORDPRESS_GRAPHQL_AUTH_TOKEN`.
 
+## Vercel CPU Optimization
+
+If fluid active CPU looks high on a low-traffic site, see
+`docs/headless-wordpress-migration-plan.md` section **Vercel CPU And Runtime Cost
+Control** for the low-risk reduction plan. The first step combines client auth
+checks into `/api/auth/summary` so each page makes one auth request instead of
+two.
+
 ## Scripts
 
 ```bash

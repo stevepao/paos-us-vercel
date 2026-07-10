@@ -43,8 +43,10 @@ const commentFormatter = new Intl.NumberFormat("en-US");
 
 export async function generateStaticParams() {
   const posts = await getPublicPosts();
+  const limit = getPrebuildPostLimit();
+  const postsToPrebuild = limit === 0 ? posts : posts.slice(0, limit);
 
-  return posts.slice(0, getPrebuildPostLimit()).map((post) => {
+  return postsToPrebuild.map((post) => {
     const [, year, month, slug] = post.uri.split("/");
     return { year, month, slug };
   });
@@ -94,9 +96,10 @@ export default async function DatedPostPage({
 
   const publicPost = isPublicPost(post);
   let canViewAllPosts = false;
+  let session = null;
 
   if (!publicPost || allPostsCategory) {
-    const session = await getServerSession(authOptions);
+    session = await getServerSession(authOptions);
     canViewAllPosts = canViewPrivatePosts(session?.user?.email);
 
     if (!publicPost && !canViewAllPosts) {
@@ -112,6 +115,8 @@ export default async function DatedPostPage({
 
       post = authenticatedPost;
     }
+  } else {
+    session = await getServerSession(authOptions);
   }
 
   const comments = publicPost ? await getCommentsForPost(post.databaseId) : [];
@@ -171,7 +176,7 @@ export default async function DatedPostPage({
         ))}
       </p>
       {publicPost ? (
-        <Comments comments={comments} post={post} status={commentStatus} />
+        <Comments comments={comments} post={post} session={session} status={commentStatus} />
       ) : null}
     </article>
   );

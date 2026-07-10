@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { AuthSummaryProvider } from "@/components/AuthSummaryProvider";
 import { AuthorizedNavItems } from "@/components/AuthorizedNavItems";
 import { FooterAuthButton } from "@/components/FooterAuthButton";
 import { SocialLinks } from "@/components/SocialLinks";
@@ -12,8 +13,10 @@ type SiteShellProps = {
 };
 
 export function SiteShell({ settings, children }: SiteShellProps) {
+  const isAuthConfigured = isGoogleAuthConfigured();
+
   return (
-    <>
+    <AuthSummaryProvider isAuthConfigured={isAuthConfigured}>
       <header className="border-b border-paos-line bg-white">
         <div className="mx-auto max-w-[1200px] px-4 py-14 md:py-20">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
@@ -59,10 +62,10 @@ export function SiteShell({ settings, children }: SiteShellProps) {
             <Link className="text-inherit" href="/terms/">
               Terms
             </Link>{" "}
-            · <FooterAuthButton isAuthConfigured={isGoogleAuthConfigured()} />
+            · <FooterAuthButton />
           </div>
         </div>
       </footer>
-    </>
+    </AuthSummaryProvider>
   );
 }

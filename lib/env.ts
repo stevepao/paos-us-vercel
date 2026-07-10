@@ -60,8 +60,13 @@ export function getPublicCategorySlugs(): string[] {
 }
 
 export function getPrebuildPostLimit(): number {
-  const value = Number(process.env.WORDPRESS_PREBUILD_POST_LIMIT ?? 8);
-  return Number.isFinite(value) && value >= 0 ? value : 8;
+  const raw = process.env.WORDPRESS_PREBUILD_POST_LIMIT;
+  if (raw === undefined || raw.trim() === "") {
+    return 0;
+  }
+
+  const value = Number(raw);
+  return Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
 export function getPublicPageSlugs(): Set<string> {
