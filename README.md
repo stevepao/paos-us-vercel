@@ -3,7 +3,7 @@
 This is the Next.js App Router frontend for `https://paos.us`. WordPress remains
 the editorial backend at `https://api.paos.us`, while the public site, comments,
 contact form, sitemap, RSS feed, social previews, and privacy/auth flows are
-served by Next.js on Vercel.
+served by Next.js on Cloudflare Workers via OpenNext.
 
 ## What It Does
 
@@ -23,7 +23,7 @@ served by Next.js on Vercel.
 - Emits a site-level schema.org graph for the Pao Family website and family
   member `Person` nodes.
 - Includes `/privacy/` and `/terms/` pages for Google OAuth review.
-- Uses Vercel Analytics.
+- Contact SMTP uses Nodemailer locally and `@workermailer/smtp` on Workers.
 
 ## Local Development
 
@@ -75,7 +75,7 @@ For private-content rendering through Next.js, add this to WordPress
 define('PAOS_GRAPHQL_SERVER_TOKEN', 'replace-with-a-long-random-secret');
 ```
 
-Set the same value in Vercel/Next:
+Set the same value in the Worker secrets / Next env:
 
 ```env
 WORDPRESS_GRAPHQL_AUTH_TOKEN=replace-with-a-long-random-secret
@@ -137,13 +137,23 @@ Recommended GraphQL hardening:
 - Consider a WPGraphQL max query depth around `7`.
 - Keep private GraphQL access behind `WORDPRESS_GRAPHQL_AUTH_TOKEN`.
 
-## Vercel CPU Optimization
+## Cloudflare Workers
 
-If fluid active CPU looks high on a low-traffic site, see
-`docs/headless-wordpress-migration-plan.md` section **Vercel CPU And Runtime Cost
-Control** for the low-risk reduction plan. The first step combines client auth
-checks into `/api/auth/summary` so each page makes one auth request instead of
-two.
+See [`docs/cloudflare-workers-migration.md`](docs/cloudflare-workers-migration.md)
+for R2/D1 setup, secrets, Turnstile hostnames, and cutover notes.
+
+```bash
+npm run preview   # OpenNext build + local Workers runtime
+npm run deploy    # OpenNext build + deploy (add -- --keep-vars to keep secrets)
+./scripts/sync-wrangler-secrets.sh
+```
+
+Before preview smoke-testing:
+
+1. Add `paos.us` and `*.workers.dev` to the Turnstile widget hostnames.
+2. Add Google OAuth callbacks for `https://paos.us/api/auth/callback/google` and
+   `https://paos-us.spao-ai.workers.dev/api/auth/callback/google`.
+3. Keep the WordPress revalidate webhook on Vercel until proxied DNS serves the Worker.
 
 ## Scripts
 
@@ -152,6 +162,8 @@ npm run dev
 npm run lint
 npm run build
 npm run start
+npm run preview
+npm run deploy
 ```
 
 ## Verification

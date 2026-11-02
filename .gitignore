@@ -1,8 +1,11 @@
 .next
+.open-next
 node_modules
 .env
 .env*.local
+.env.production.local
 !.env.example
+.dev.vars
 *.tsbuildinfo
 .DS_Store
 npm-debug.log*
@@ -10,3 +13,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 docs/wp-content.zip
+.wrangler
+cloudflare-env.d.ts
+.env.production.local

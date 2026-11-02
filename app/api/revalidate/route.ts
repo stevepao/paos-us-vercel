@@ -3,8 +3,6 @@ import { NextResponse } from "next/server";
 import { getRevalidateSecret } from "@/lib/env";
 import { WORDPRESS_TAG } from "@/lib/wordpress";
 
-export const runtime = "nodejs";
-
 type RevalidatePayload = {
   slug?: string;
   uri?: string;

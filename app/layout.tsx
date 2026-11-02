@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { SiteShell } from "@/components/SiteShell";
 import { SiteJsonLd } from "@/components/SiteJsonLd";
@@ -23,7 +22,6 @@ export default async function RootLayout({
       <body>
         <SiteJsonLd settings={settings} />
         <SiteShell settings={settings}>{children}</SiteShell>
-        <Analytics />
       </body>
     </html>
   );

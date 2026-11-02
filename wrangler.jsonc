@@ -1,0 +1,73 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "paos-us",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "paos.us/*", "zone_name": "paos.us" },
+    { "pattern": "paos.us", "zone_name": "paos.us" },
+    { "pattern": "www.paos.us/*", "zone_name": "paos.us" },
+    { "pattern": "www.paos.us", "zone_name": "paos.us" }
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "paos-us"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "paos-us-next-cache"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "NEXT_TAG_CACHE_D1",
+      "database_name": "paos-us-next-tag-cache",
+      "database_id": "eab619b8-244f-4355-a22d-d2e1c150e978"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "NEXT_CACHE_DO_QUEUE",
+        "class_name": "DOQueueHandler"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["DOQueueHandler"]
+    }
+  ],
+  "vars": {
+    "NEXTJS_ENV": "production",
+    "USE_WORKERMAILER": "true",
+    "AUTH_TRUST_HOST": "true",
+    "SITE_URL": "https://paos.us",
+    "NEXT_PUBLIC_SITE_URL": "https://paos.us",
+    "NEXTAUTH_URL": "https://paos.us",
+    "WORDPRESS_SITE_URL": "https://api.paos.us",
+    "WORDPRESS_API_URL": "https://api.paos.us/graphql",
+    "WORDPRESS_REST_URL": "https://api.paos.us/wp-json",
+    "WORDPRESS_MEDIA_BASE_URL": "https://api.paos.us/wp-content/uploads",
+    "WORDPRESS_PUBLIC_CATEGORY_SLUGS": "featured-photo,yhpao",
+    "WORDPRESS_PUBLIC_PAGE_SLUGS": "home,posts,contact,directions,yhpao",
+    "WORDPRESS_PREBUILD_POST_LIMIT": "0",
+    "WORDPRESS_REDIRECTION_API_URL": "https://api.paos.us/wp-json/redirection/v1/redirect",
+    "WORDPRESS_REDIRECTION_CACHE_TTL_SECONDS": "86400",
+    "SMTP_HOST": "smtp.purelymail.com",
+    "SMTP_PORT": "587",
+    "SMTP_SECURE": "false",
+    "SMTP_FROM": "webmaster@hillwork.com",
+    "CONTACT_TO": "us@spao.net"
+  }
+}

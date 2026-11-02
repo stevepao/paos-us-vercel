@@ -4,8 +4,6 @@ import { authOptions, isGoogleAuthConfigured } from "@/lib/auth";
 import { getOptionalEnv, getWordPressRestUrl } from "@/lib/env";
 import { getPublicPostBySlug } from "@/lib/wordpress";
 
-export const runtime = "nodejs";
-
 export function GET() {
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json({ ok: false }, { status: 404 });

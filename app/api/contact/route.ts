@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
 import { getOptionalEnv } from "@/lib/env";
-
-export const runtime = "nodejs";
+import {
+  getSmtpConfigFromEnv,
+  sendContactEmail,
+} from "@/lib/send-contact-email";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -51,45 +52,27 @@ export async function POST(request: Request) {
     }
   }
 
-  const host = getOptionalEnv("SMTP_HOST");
-  const user = getOptionalEnv("SMTP_USER");
-  const pass = getOptionalEnv("SMTP_PASS");
-  const from = getOptionalEnv("SMTP_FROM") ?? "webmaster@hillwork.com";
-  const to = getOptionalEnv("CONTACT_TO") ?? "us@spao.net";
+  const smtp = getSmtpConfigFromEnv();
 
-  if (!host || !user || !pass) {
+  if (!smtp) {
     redirectUrl.searchParams.set("status", "missing-config");
     return NextResponse.redirect(redirectUrl);
   }
 
-  const transporter = nodemailer.createTransport({
-    host,
-    port: Number(process.env.SMTP_PORT ?? 587),
-    secure: process.env.SMTP_SECURE === "true",
-    auth: {
-      user,
-      pass,
-    },
-  });
-
-  await transporter.sendMail({
-    from,
-    to,
+  await sendContactEmail(smtp, {
     replyTo: email,
     subject: `Pao Family contact form: ${name}`,
-    text: [
-      `Name: ${name}`,
-      `Email: ${email}`,
-      "",
-      message,
-    ].join("\n"),
+    text: [`Name: ${name}`, `Email: ${email}`, "", message].join("\n"),
   });
 
   redirectUrl.searchParams.set("status", "sent");
   return NextResponse.redirect(redirectUrl);
 }
 
-async function verifyTurnstileToken(token: string, remoteIp?: string | null): Promise<boolean> {
+async function verifyTurnstileToken(
+  token: string,
+  remoteIp?: string | null,
+): Promise<boolean> {
   const secret = getOptionalEnv("CONTACT_TURNSTILE_SECRET_KEY");
 
   if (!secret || !token) {
@@ -105,10 +88,13 @@ async function verifyTurnstileToken(token: string, remoteIp?: string | null): Pr
     body.set("remoteip", remoteIp);
   }
 
-  const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-    method: "POST",
-    body,
-  });
+  const response = await fetch(
+    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    {
+      method: "POST",
+      body,
+    },
+  );
 
   if (!response.ok) {
     return false;
