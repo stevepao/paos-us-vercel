@@ -2,7 +2,7 @@
   "name": "paos-us-vercel",
   "version": "1.0.0",
   "private": true,
-  "description": "Next.js frontend for the Pao Family WordPress migration.",
+  "description": "Next.js frontend for paos.us on Cloudflare Workers (OpenNext). Repo name paos-us-vercel is historical.",
   "directories": {
     "doc": "docs"
   },

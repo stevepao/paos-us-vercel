@@ -1,9 +1,11 @@
 # Pao Family Next.js Frontend
 
-This is the Next.js App Router frontend for `https://paos.us`. WordPress remains
-the editorial backend at `https://api.paos.us`, while the public site, comments,
-contact form, sitemap, RSS feed, social previews, and privacy/auth flows are
-served by Next.js on Cloudflare Workers via OpenNext.
+Production host: **Cloudflare Workers** (OpenNext), Worker name `paos-us`, site
+`https://paos.us`. WordPress stays the editorial backend at `https://api.paos.us`.
+
+The GitHub repo / folder is still named `paos-us-vercel` from the earlier Vercel
+deploy. That name is historical only — do not deploy this app to Vercel. Use
+`npm run deploy` (Wrangler / OpenNext) and the secrets sync script below.
 
 ## What It Does
 
@@ -148,12 +150,14 @@ npm run deploy    # OpenNext build + deploy (add -- --keep-vars to keep secrets)
 ./scripts/sync-wrangler-secrets.sh
 ```
 
-Before preview smoke-testing:
+When rotating Turnstile keys: update `.env.local`, sync Worker secrets, then
+**redeploy** so `NEXT_PUBLIC_CONTACT_TURNSTILE_SITE_KEY` is rebuilt into the
+client. Also keep Turnstile hostnames and Google OAuth redirect URIs in sync for
+`https://paos.us` and `https://paos-us.spao-ai.workers.dev`.
 
-1. Add `paos.us` and `*.workers.dev` to the Turnstile widget hostnames.
-2. Add Google OAuth callbacks for `https://paos.us/api/auth/callback/google` and
-   `https://paos-us.spao-ai.workers.dev/api/auth/callback/google`.
-3. Keep the WordPress revalidate webhook on Vercel until proxied DNS serves the Worker.
+WordPress revalidate webhooks should target:
+
+`https://paos.us/api/revalidate?token=REVALIDATE_SECRET`
 
 ## Scripts
 
