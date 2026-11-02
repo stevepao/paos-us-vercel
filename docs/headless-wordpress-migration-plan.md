@@ -1,5 +1,15 @@
 # Headless WordPress Migration Plan
 
+> **Archive only.** This plan records how the WordPress → Next.js headless
+> migration was designed and executed (including an earlier Vercel hosting
+> phase and CPU notes). It is **not** the current production hosting runbook.
+>
+> **Superseded for Cloudflare / Workers hosting, deploys, secrets, Turnstile,
+> and cutover:** see
+> [`cloudflare-workers-migration.md`](./cloudflare-workers-migration.md).
+> Production is Cloudflare Workers (OpenNext), Worker `paos-us`, site
+> `https://paos.us`. The repo name `paos-us-vercel` is historical.
+
 This document summarizes the work that went into migrating this site from a
 WordPress-rendered frontend to a small Next.js App Router frontend. It is meant
 as a repeatable plan for another WordPress site of similar scope.
